@@ -11,8 +11,7 @@ import java.security.NoSuchAlgorithmException;
 public class Walk {
     private static void writeHashToFile(String hash, BufferedWriter bufferedWriter, String nameOfFile) {
         try {
-//            String.format("%s %s%n", hash, nameOfFile);
-            bufferedWriter.write(hash + " " + nameOfFile + System.lineSeparator());
+            bufferedWriter.write(String.format("%s %s%s", hash, nameOfFile, System.lineSeparator()));
         } catch (IOException e) {
             System.err.println("Can't write to output file: " + e.getMessage());
         }
@@ -26,24 +25,30 @@ public class Walk {
             final Path pathForWrite;
             try {
                 pathForRead = Path.of(args[0]);
+            } catch (InvalidPathException e) {
+                System.err.println("Invalid path for input file");
+                return;
+            }
+            try {
                 pathForWrite = Path.of(args[1]);
-
-//                File outFile = new File(args[1]);
-                if (!Files.exists(pathForWrite.getParent())) {
-                    Files.createDirectory(outFile.getParentFile().toPath()); // pathForWrite.getParent()
+                if (pathForWrite.getParent() != null && Files.notExists(pathForWrite.getParent())) {
+                    Files.createDirectory(pathForWrite.getParent());
                 }
-            } catch (NullPointerException e) {
-                System.err.println("Nu such file: " + e.getMessage());
             } catch (InvalidPathException e) {
                 System.err.println("Path string cannot be converted to a Path: " + e.getMessage());
                 return;
             } catch (IOException e) {
-                e.printStackTrace(); // valied error
+                System.err.println("Failed in creating directory");
                 return;
             }
-
-
-
+            MessageDigest messageDigest;
+            try {
+                messageDigest = MessageDigest.getInstance("SHA-256");
+            } catch (NoSuchAlgorithmException e) {
+                System.err.println("Invalid hash algorithm");
+                return;
+            }
+            String hashValueForError = "0".repeat(64);
             try (BufferedReader bufferedReader = Files.newBufferedReader(pathForRead)) {
                 try (BufferedWriter bufferedWriter = Files.newBufferedWriter(pathForWrite)) {
                     String nameOfFile;
@@ -53,27 +58,22 @@ public class Walk {
                             try {
                                 pathFile = Path.of(nameOfFile);
                             } catch (InvalidPathException e) {
-                                writeHashToFile("0".repeat(64), bufferedWriter, nameOfFile);
+                                writeHashToFile(hashValueForError, bufferedWriter, nameOfFile);
                                 continue;
                             }
                             try (InputStream inputStream = Files.newInputStream(pathFile)) {
-                                try {
-                                    // NOTE: create once
-                                    MessageDigest messageDigest = MessageDigest.getInstance("SHA-256");
-                                    byte[] arrOfBytes = new byte[1024];
-                                    int counterOfBytes = inputStream.read(arrOfBytes);
-                                    while (counterOfBytes != -1) {
-                                        messageDigest.update(arrOfBytes, 0, counterOfBytes);
-                                        counterOfBytes = inputStream.read(arrOfBytes);
-                                    }
-                                    byte[] hash = messageDigest.digest();
-                                    String hashString = String.format("%0" + (hash.length << 1) + "x", new BigInteger(1, hash));
-                                    writeHashToFile(hashString, bufferedWriter, nameOfFile);
-                                } catch (NoSuchAlgorithmException e) {
-                                    throw new RuntimeException("Invalid hashing algorithm");
+                                byte[] arrOfBytes = new byte[1024];
+                                int counterOfBytes = inputStream.read(arrOfBytes);
+                                while (counterOfBytes != -1) {
+                                    messageDigest.update(arrOfBytes, 0, counterOfBytes);
+                                    counterOfBytes = inputStream.read(arrOfBytes);
                                 }
+                                byte[] hash = messageDigest.digest();
+                                String hashString = String.format("%0" + (hash.length << 1) + "x", new BigInteger(1, hash));
+                                writeHashToFile(hashString, bufferedWriter, nameOfFile);
+
                             } catch (IOException e) {
-                                writeHashToFile("0".repeat(64), bufferedWriter, nameOfFile);
+                                writeHashToFile(hashValueForError, bufferedWriter, nameOfFile);
                             }
                         }
                     } catch (IOException e) {
