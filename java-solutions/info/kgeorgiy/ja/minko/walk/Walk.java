@@ -11,6 +11,7 @@ import java.security.NoSuchAlgorithmException;
 public class Walk {
     private static void writeHashToFile(String hash, BufferedWriter bufferedWriter, String nameOfFile) {
         try {
+//            String.format("%s %s%n", hash, nameOfFile);
             bufferedWriter.write(hash + " " + nameOfFile + System.lineSeparator());
         } catch (IOException e) {
             System.err.println("Can't write to output file: " + e.getMessage());
@@ -21,15 +22,15 @@ public class Walk {
         if (args == null || args.length != 2 || args[0] == null || args[1] == null) {
             System.err.println("Incorrect format of program arguments");
         } else {
-            Path pathForRead = null;
-            Path pathForWrite = null;
+            final Path pathForRead;
+            final Path pathForWrite;
             try {
                 pathForRead = Path.of(args[0]);
                 pathForWrite = Path.of(args[1]);
 
-                File outFile = new File(args[1]);
-                if (!Files.exists(outFile.getParentFile().toPath())) {
-                    Files.createDirectory(outFile.getParentFile().toPath());
+//                File outFile = new File(args[1]);
+                if (!Files.exists(pathForWrite.getParent())) {
+                    Files.createDirectory(outFile.getParentFile().toPath()); // pathForWrite.getParent()
                 }
             } catch (NullPointerException e) {
                 System.err.println("Nu such file: " + e.getMessage());
@@ -37,8 +38,12 @@ public class Walk {
                 System.err.println("Path string cannot be converted to a Path: " + e.getMessage());
                 return;
             } catch (IOException e) {
-                e.printStackTrace();
+                e.printStackTrace(); // valied error
+                return;
             }
+
+
+
             try (BufferedReader bufferedReader = Files.newBufferedReader(pathForRead)) {
                 try (BufferedWriter bufferedWriter = Files.newBufferedWriter(pathForWrite)) {
                     String nameOfFile;
@@ -53,6 +58,7 @@ public class Walk {
                             }
                             try (InputStream inputStream = Files.newInputStream(pathFile)) {
                                 try {
+                                    // NOTE: create once
                                     MessageDigest messageDigest = MessageDigest.getInstance("SHA-256");
                                     byte[] arrOfBytes = new byte[1024];
                                     int counterOfBytes = inputStream.read(arrOfBytes);
