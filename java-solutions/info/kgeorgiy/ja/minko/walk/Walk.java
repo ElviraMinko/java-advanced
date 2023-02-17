@@ -21,14 +21,23 @@ public class Walk {
         if (args == null || args.length != 2 || args[0] == null || args[1] == null) {
             System.err.println("Incorrect format of program arguments");
         } else {
-            Path pathForRead;
-            Path pathForWrite;
+            Path pathForRead = null;
+            Path pathForWrite = null;
             try {
                 pathForRead = Path.of(args[0]);
                 pathForWrite = Path.of(args[1]);
+
+                File outFile = new File(args[1]);
+                if (!Files.exists(outFile.getParentFile().toPath())) {
+                    Files.createDirectory(outFile.getParentFile().toPath());
+                }
+            } catch (NullPointerException e) {
+                System.err.println("Nu such file: " + e.getMessage());
             } catch (InvalidPathException e) {
                 System.err.println("Path string cannot be converted to a Path: " + e.getMessage());
                 return;
+            } catch (IOException e) {
+                e.printStackTrace();
             }
             try (BufferedReader bufferedReader = Files.newBufferedReader(pathForRead)) {
                 try (BufferedWriter bufferedWriter = Files.newBufferedWriter(pathForWrite)) {
