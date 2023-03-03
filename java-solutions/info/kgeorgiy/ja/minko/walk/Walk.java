@@ -9,8 +9,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
 public class Walk {
-    private static final String hashValueForError = "0".repeat(64);
-    private static final byte[] arrOfBytes = new byte[1024];
+    private static final String HASH_VALUE_FOR_ERROR = "0".repeat(64);
 
     private static void writeHashToFile(String hash, BufferedWriter bufferedWriter, String nameOfFile) {
         try {
@@ -29,10 +28,11 @@ public class Walk {
                 try {
                     pathFile = Path.of(nameOfFile);
                 } catch (InvalidPathException e) {
-                    writeHashToFile(hashValueForError, bufferedWriter, nameOfFile);
+                    writeHashToFile(HASH_VALUE_FOR_ERROR, bufferedWriter, nameOfFile);
                     continue;
                 }
                 try (InputStream inputStream = Files.newInputStream(pathFile)) {
+                    byte[] arrOfBytes = new byte[1024];
                     int counterOfBytes = inputStream.read(arrOfBytes);
                     while (counterOfBytes != -1) {
                         messageDigest.update(arrOfBytes, 0, counterOfBytes);
@@ -42,7 +42,7 @@ public class Walk {
                     String hashString = String.format("%0" + (hash.length << 1) + "x", new BigInteger(1, hash));
                     writeHashToFile(hashString, bufferedWriter, nameOfFile);
                 } catch (IOException e) {
-                    writeHashToFile(hashValueForError, bufferedWriter, nameOfFile);
+                    writeHashToFile(HASH_VALUE_FOR_ERROR, bufferedWriter, nameOfFile);
                 }
             }
         } catch (IOException e) {
@@ -87,8 +87,7 @@ public class Walk {
 
         try (BufferedReader bufferedReader = Files.newBufferedReader(pathForRead);
              BufferedWriter bufferedWriter = Files.newBufferedWriter(pathForWrite)) {
-            processingFile(messageDigest, bufferedReader,
-                    bufferedWriter);
+            processingFile(messageDigest, bufferedReader, bufferedWriter);
         } catch (IOException e) {
             System.err.println("Problem with file processing: " + e.getMessage());
         }
