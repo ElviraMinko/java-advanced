@@ -120,6 +120,7 @@ public class ArraySet<T> extends AbstractSet<T> implements SortedSet<T> {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public boolean contains(Object o) {
         return Collections.binarySearch(list, (T) o, comparator) >= 0;
     }
