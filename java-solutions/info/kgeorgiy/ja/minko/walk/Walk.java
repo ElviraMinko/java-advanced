@@ -9,11 +9,44 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
 public class Walk {
+    private static final String hashValueForError = "0".repeat(64);
+    private static final byte[] arrOfBytes = new byte[1024];
+
     private static void writeHashToFile(String hash, BufferedWriter bufferedWriter, String nameOfFile) {
         try {
             bufferedWriter.write(String.format("%s %s%s", hash, nameOfFile, System.lineSeparator()));
         } catch (IOException e) {
             System.err.println("Can't write to output file: " + e.getMessage());
+        }
+    }
+
+    private static void processingFile(MessageDigest messageDigest, BufferedReader bufferedReader,
+                                       BufferedWriter bufferedWriter) {
+        String nameOfFile;
+        try {
+            while ((nameOfFile = bufferedReader.readLine()) != null) {
+                Path pathFile;
+                try {
+                    pathFile = Path.of(nameOfFile);
+                } catch (InvalidPathException e) {
+                    writeHashToFile(hashValueForError, bufferedWriter, nameOfFile);
+                    continue;
+                }
+                try (InputStream inputStream = Files.newInputStream(pathFile)) {
+                    int counterOfBytes = inputStream.read(arrOfBytes);
+                    while (counterOfBytes != -1) {
+                        messageDigest.update(arrOfBytes, 0, counterOfBytes);
+                        counterOfBytes = inputStream.read(arrOfBytes);
+                    }
+                    byte[] hash = messageDigest.digest();
+                    String hashString = String.format("%0" + (hash.length << 1) + "x", new BigInteger(1, hash));
+                    writeHashToFile(hashString, bufferedWriter, nameOfFile);
+                } catch (IOException e) {
+                    writeHashToFile(hashValueForError, bufferedWriter, nameOfFile);
+                }
+            }
+        } catch (IOException e) {
+            System.err.println("An error occurred while reading from a input file: " + e.getMessage());
         }
     }
 
@@ -52,40 +85,12 @@ public class Walk {
             return;
         }
 
-        // :NOTE: может быть константой
-        final String hashValueForError = "0".repeat(64);
         try (BufferedReader bufferedReader = Files.newBufferedReader(pathForRead);
              BufferedWriter bufferedWriter = Files.newBufferedWriter(pathForWrite)) {
-            String nameOfFile;
-            try { // :NOTE: не нужен
-                while ((nameOfFile = bufferedReader.readLine()) != null) {
-                    Path pathFile;
-                    try {
-                        pathFile = Path.of(nameOfFile);
-                    } catch (InvalidPathException e) {
-                        writeHashToFile(hashValueForError, bufferedWriter, nameOfFile);
-                        continue;
-                    }
-                    try (InputStream inputStream = Files.newInputStream(pathFile)) {
-                        byte[] arrOfBytes = new byte[1024];
-                        int counterOfBytes = inputStream.read(arrOfBytes);
-                        while (counterOfBytes != -1) {
-                            messageDigest.update(arrOfBytes, 0, counterOfBytes);
-                            counterOfBytes = inputStream.read(arrOfBytes);
-                        }
-                        byte[] hash = messageDigest.digest();
-                        String hashString = String.format("%0" + (hash.length << 1) + "x", new BigInteger(1, hash));
-                        writeHashToFile(hashString, bufferedWriter, nameOfFile);
-                    } catch (IOException e) {
-                        writeHashToFile(hashValueForError, bufferedWriter, nameOfFile);
-                    }
-                }
-            } catch (IOException e) {
-                System.err.println("An error occurred while reading from a input file: " + e.getMessage());
-            }
+            processingFile(messageDigest, bufferedReader,
+                    bufferedWriter);
         } catch (IOException e) {
-            // :NOTE: общее сообщение об ошибке
-            System.err.println("Problem with file's reading: " + e.getMessage());
+            System.err.println("Problem with file processing: " + e.getMessage());
         }
     }
 }
