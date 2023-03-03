@@ -20,71 +20,72 @@ public class Walk {
     public static void main(String[] args) {
         if (args == null || args.length != 2 || args[0] == null || args[1] == null) {
             System.err.println("Incorrect format of program arguments");
-        } else {
-            final Path pathForRead;
-            final Path pathForWrite;
-            try {
-                pathForRead = Path.of(args[0]);
-            } catch (InvalidPathException e) {
-                System.err.println("Invalid path for input file");
-                return;
-            }
-            try {
-                pathForWrite = Path.of(args[1]);
-                if (pathForWrite.getParent() != null && Files.notExists(pathForWrite.getParent())) {
-                    Files.createDirectory(pathForWrite.getParent());
-                }
-            } catch (InvalidPathException e) {
-                System.err.println("Path string cannot be converted to a Path: " + e.getMessage());
-                return;
-            } catch (IOException e) {
-                System.err.println("Failed in creating directory");
-                return;
-            }
-            MessageDigest messageDigest;
-            try {
-                messageDigest = MessageDigest.getInstance("SHA-256");
-            } catch (NoSuchAlgorithmException e) {
-                System.err.println("Invalid hash algorithm");
-                return;
-            }
-            String hashValueForError = "0".repeat(64);
-            try (BufferedReader bufferedReader = Files.newBufferedReader(pathForRead)) {
-                try (BufferedWriter bufferedWriter = Files.newBufferedWriter(pathForWrite)) {
-                    String nameOfFile;
-                    try {
-                        while ((nameOfFile = bufferedReader.readLine()) != null) {
-                            Path pathFile;
-                            try {
-                                pathFile = Path.of(nameOfFile);
-                            } catch (InvalidPathException e) {
-                                writeHashToFile(hashValueForError, bufferedWriter, nameOfFile);
-                                continue;
-                            }
-                            try (InputStream inputStream = Files.newInputStream(pathFile)) {
-                                byte[] arrOfBytes = new byte[1024];
-                                int counterOfBytes = inputStream.read(arrOfBytes);
-                                while (counterOfBytes != -1) {
-                                    messageDigest.update(arrOfBytes, 0, counterOfBytes);
-                                    counterOfBytes = inputStream.read(arrOfBytes);
-                                }
-                                byte[] hash = messageDigest.digest();
-                                String hashString = String.format("%0" + (hash.length << 1) + "x", new BigInteger(1, hash));
-                                writeHashToFile(hashString, bufferedWriter, nameOfFile);
+            return;
+        }
 
-                            } catch (IOException e) {
-                                writeHashToFile(hashValueForError, bufferedWriter, nameOfFile);
-                            }
-                        }
-                    } catch (IOException e) {
-                        System.err.println("An error occurred while reading from a input file: " + e.getMessage());
+        final Path pathForRead;
+        final Path pathForWrite;
+        try {
+            pathForRead = Path.of(args[0]);
+        } catch (InvalidPathException e) {
+            System.err.println("Invalid path for input file");
+            return;
+        }
+        try {
+            pathForWrite = Path.of(args[1]);
+            if (pathForWrite.getParent() != null && Files.notExists(pathForWrite.getParent())) {
+                Files.createDirectory(pathForWrite.getParent());
+            }
+        } catch (InvalidPathException e) {
+            System.err.println("Path string cannot be converted to a Path: " + e.getMessage());
+            return;
+        } catch (IOException e) {
+            System.err.println("Failed in creating directory");
+            return;
+        }
+
+        final MessageDigest messageDigest;
+        try {
+            messageDigest = MessageDigest.getInstance("SHA-256");
+        } catch (NoSuchAlgorithmException e) {
+            System.err.println("Invalid hash algorithm");
+            return;
+        }
+
+        // :NOTE: может быть константой
+        final String hashValueForError = "0".repeat(64);
+        try (BufferedReader bufferedReader = Files.newBufferedReader(pathForRead);
+             BufferedWriter bufferedWriter = Files.newBufferedWriter(pathForWrite)) {
+            String nameOfFile;
+            try { // :NOTE: не нужен
+                while ((nameOfFile = bufferedReader.readLine()) != null) {
+                    Path pathFile;
+                    try {
+                        pathFile = Path.of(nameOfFile);
+                    } catch (InvalidPathException e) {
+                        writeHashToFile(hashValueForError, bufferedWriter, nameOfFile);
+                        continue;
                     }
-                } catch (IOException e) {
-                    System.err.println("Problem with writing in file: " + e.getMessage());
+                    try (InputStream inputStream = Files.newInputStream(pathFile)) {
+                        byte[] arrOfBytes = new byte[1024];
+                        int counterOfBytes = inputStream.read(arrOfBytes);
+                        while (counterOfBytes != -1) {
+                            messageDigest.update(arrOfBytes, 0, counterOfBytes);
+                            counterOfBytes = inputStream.read(arrOfBytes);
+                        }
+                        byte[] hash = messageDigest.digest();
+                        String hashString = String.format("%0" + (hash.length << 1) + "x", new BigInteger(1, hash));
+                        writeHashToFile(hashString, bufferedWriter, nameOfFile);
+                    } catch (IOException e) {
+                        writeHashToFile(hashValueForError, bufferedWriter, nameOfFile);
+                    }
                 }
             } catch (IOException e) {
-                System.err.println("Problem with file's reading: " + e.getMessage());
+                System.err.println("An error occurred while reading from a input file: " + e.getMessage());
             }
+        } catch (IOException e) {
+            // :NOTE: общее сообщение об ошибке
+            System.err.println("Problem with file's reading: " + e.getMessage());
         }
     }
 }
