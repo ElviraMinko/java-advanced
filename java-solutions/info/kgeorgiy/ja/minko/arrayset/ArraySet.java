@@ -28,7 +28,7 @@ public class ArraySet<T> extends AbstractSet<T> implements SortedSet<T> {
     public ArraySet(Collection<T> collection, Comparator<T> comparator) {
         Set<T> set = new TreeSet<>(comparator);
         set.addAll(collection);
-        this.list = set.stream().toList();
+        this.list = List.copyOf(set);
         this.comparator = comparator;
     }
 
@@ -77,6 +77,7 @@ public class ArraySet<T> extends AbstractSet<T> implements SortedSet<T> {
 
     private SortedSet<T> positionSet(T Element, String position) {
         if (!isEmpty()) {
+            // :NOTE: string switch
             return switch (position) {
                 case "head" -> getSet(first(), Element, 0);
                 case "tail" -> getSet(Element, last(), 1);
