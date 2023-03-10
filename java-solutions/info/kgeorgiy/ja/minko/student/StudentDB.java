@@ -61,7 +61,7 @@ public class StudentDB implements StudentQuery {
 
     @Override
     public List<Student> sortStudentsById(Collection<Student> students) {
-        return sortStudentsBy(students, Comparator.comparing(Student::getId));
+        return sortStudentsBy(students, Student::compareTo);
     }
 
     @Override
