@@ -19,7 +19,7 @@ public class StudentDB implements StudentQuery {
     private final Comparator<Student> BASE_NAME_COMPARATOR = Comparator.comparing(Student::getLastName)
             .thenComparing(Student::getFirstName)
             .reversed()
-            .thenComparing(Student::getId);
+            .thenComparing(Student::compareTo);
 
     private <T> List<T> mapStudentsWithFunction(List<Student> students, Function<Student, T> mapper) {
         return students.stream().map(mapper).toList();
@@ -52,7 +52,7 @@ public class StudentDB implements StudentQuery {
 
     @Override
     public String getMaxStudentFirstName(List<Student> students) {
-        return students.stream().max(Comparator.comparing(Student::getId)).map(Student::getFirstName).orElse("");
+        return students.stream().max(Student::compareTo).map(Student::getFirstName).orElse("");
     }
 
     private List<Student> sortStudentsBy(Collection<Student> students, Comparator<Student> comparator) {
