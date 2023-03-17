@@ -24,10 +24,14 @@ public class Implementor implements Impler {
     private static final String IMPLEMENTS = "implements";
 
     private String getClassCode(Class<?> token) {
+
         String simpleName = token.getSimpleName();
         String canonicalName = token.getCanonicalName();
         String packageName = token.getPackageName();
-        String packageNameString = String.join(" ", PACKAGE, packageName, ";", END_LINE);
+        String packageNameString = "";
+        if (!packageName.equals("")) {
+            packageNameString = String.join(" ", PACKAGE, packageName, ";", END_LINE);
+        }
         String definitionClass = String.join(" ", PUBLIC_CLASS, simpleName +
                 IMPL, IMPLEMENTS, canonicalName, "{", END_LINE);
         Method[] methods = token.getMethods();
