@@ -82,14 +82,14 @@ public class Implementor implements Impler {
             try {
                 Files.createDirectories(path.getParent());
             } catch (IOException e) {
-                throw new ImplerException("Can't create parent directory");
+                throw new ImplerException("Can't create parent directory", e);
             }
         }
 
         try (BufferedWriter writer = Files.newBufferedWriter(path)) {
             writer.write(getClassCode(token));
         } catch (IOException e) {
-            System.err.println("Can't write in file");
+            throw new ImplerException("Problems with writer", e);
         }
 
     }
@@ -99,15 +99,18 @@ public class Implementor implements Impler {
         if (args == null || args[0] == null || args[1] == null) {
             return;
         }
-        Implementor implementor = new Implementor();
+
         try {
             Class<?> token = Class.forName(args[0]);
             Path root = Path.of(args[1]);
+            Implementor implementor = new Implementor();
             implementor.implement(token, root);
         } catch (ClassNotFoundException e) {
             throw new ImplerException("Can't find interface");
         } catch (InvalidPathException e) {
             throw new ImplerException("Incorrect path string");
+        }catch (ImplerException e) {
+            System.err.print("Problems with implement");
         }
     }
 }
