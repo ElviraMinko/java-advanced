@@ -28,10 +28,7 @@ public class Implementor implements Impler {
         String simpleName = token.getSimpleName();
         String canonicalName = token.getCanonicalName();
         String packageName = token.getPackageName();
-        String packageNameString = "";
-        if (!packageName.equals("")) {
-            packageNameString = String.join(" ", PACKAGE, packageName, ";", END_LINE);
-        }
+        String packageNameString = buildPackageString(packageName);
         String definitionClass = String.join(" ", PUBLIC_CLASS, simpleName +
                 IMPL, IMPLEMENTS, canonicalName, "{", END_LINE);
         Method[] methods = token.getMethods();
@@ -40,6 +37,13 @@ public class Implementor implements Impler {
             methodsString.append(createMethodString(method)).append(END_LINE);
         }
         return String.format("%s %s %s }", packageNameString, definitionClass, methodsString);
+    }
+
+    private String buildPackageString(String packageName) {
+        if (!packageName.equals("")) {
+            return String.join(" ", PACKAGE, packageName, ";", END_LINE);
+        }
+        return "";
     }
 
     private String createMethodString(Method method) {
@@ -109,7 +113,7 @@ public class Implementor implements Impler {
             throw new ImplerException("Can't find interface");
         } catch (InvalidPathException e) {
             throw new ImplerException("Incorrect path string");
-        }catch (ImplerException e) {
+        } catch (ImplerException e) {
             System.err.print("Problems with implement");
         }
     }
