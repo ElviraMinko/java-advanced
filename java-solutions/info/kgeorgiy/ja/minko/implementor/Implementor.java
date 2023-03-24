@@ -21,22 +21,22 @@ import java.util.jar.Manifest;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 /**
- * Implementor
+ * Implementor class
  *
  * Realizing {@code JarImpler} interface
  * @author Minko Elvira
  * */
 public class Implementor implements JarImpler {
     /**
-     * Finish line symbol in string format
+     * System-dependent line separator string
      * */
     private static final String END_LINE = System.lineSeparator();
     /**
-     * Package string
+     * The start substring of package string
      * */
     private static final String PACKAGE = "package";
     /**
-     * Public class string
+     * The start substring of public class string
      * */
     private static final String PUBLIC_CLASS = "public class";
     /**
@@ -54,7 +54,7 @@ public class Implementor implements JarImpler {
 
     /**
      * File visitor, which delete all files and directories in catalog
-     *  Modified Georgiy Korneev's code
+     *  <p>Modified Georgiy Korneev's code</p>
      */
     private static final SimpleFileVisitor<Path> DELETE_VISITOR = new SimpleFileVisitor<>() {
         @Override
@@ -109,7 +109,7 @@ public class Implementor implements JarImpler {
      * Return string representation of default realization {@code method}
      * <p> Generated method always {@code public} and returns result of {@link #getReturnDefaultValue(Class)}
      * @param method realisable method
-     * @return value in {@link String}
+     * @return code of method in {@link String}
      *
      */
     private String createMethodString(Method method) {
@@ -123,9 +123,13 @@ public class Implementor implements JarImpler {
      * Return string representation of default value of {@code token} type
      * <p>
      * {@code void} produce {@code ""}
+     * <p>
      * constructable types produce {@code "null"}
+     * <p>
      * {@code boolean} produce {@code "false"}
+     * <p>
      * other primitive types produce zero
+     * <p>
      * @param token interface type token.
      * @return value in {@link String}
      *
@@ -147,7 +151,7 @@ public class Implementor implements JarImpler {
      * Generate parameter's string to java method
      *
      * @param method containing parameters.
-     * @return {@link String} with types and parameters names
+     * @return {@link String} with types and parameters names in correct order
      */
     private String getParametersToString(Method method) {
         Parameter[] parameters = method.getParameters();
