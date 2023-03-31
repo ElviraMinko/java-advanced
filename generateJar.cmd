@@ -1,3 +1,5 @@
+:NOTE: relative path
+
 SET project=C:\java-advanced
 SET repository=C:\java-advanced\java-advanced-2023
 SET library=%repository%\lib\*
@@ -9,6 +11,8 @@ SET modules=%repository%\modules\
 SET source=%project%\src
 cd %project%
 javac -d %dst% -cp %modules%;%library%;%tests%; java-solutions\info\kgeorgiy\ja\minko\implementor\Implementor.java
+
+:NOTE: Class-path, don't add Impler and another files
 
 cd %dst%
 jar xf %tests% %dep%Impler.class %dep%JarImpler.class %dep%ImplerException.class

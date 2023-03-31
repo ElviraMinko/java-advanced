@@ -204,6 +204,7 @@ public class Implementor implements JarImpler {
      * When got two arguments run {@link JarImpler#implement(Class, Path)}
      * When got three arguments and first equals {@code -jar} run {@link JarImpler#implementJar(Class, Path)}
      *
+     * java [-jar] <class> <path>
      * @param args array with given arguments.
      * @throws ImplerException when incorrect args or it throws {@link #implementJar(Class, Path)} or {@link #implement(Class, Path)}
      */
