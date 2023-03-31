@@ -20,41 +20,43 @@ import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
+
 /**
  * Implementor class
- *
+ * <p>
  * Realizing {@code JarImpler} interface
+ *
  * @author Minko Elvira
- * */
+ */
 public class Implementor implements JarImpler {
     /**
      * System-dependent line separator string
-     * */
+     */
     private static final String END_LINE = System.lineSeparator();
     /**
      * The start substring of package string
-     * */
+     */
     private static final String PACKAGE = "package";
     /**
      * The start substring of public class string
-     * */
+     */
     private static final String PUBLIC_CLASS = "public class";
     /**
      * Implemented suffix
-     * */
+     */
     private static final String IMPL = "Impl";
     /**
      * Implemented suffix and .java string
-     * */
+     */
     private static final String IMPL_JAVA = "Impl.java";
     /**
      * Implements string
-     * */
+     */
     private static final String IMPLEMENTS = "implements";
 
     /**
      * File visitor, which delete all files and directories in catalog
-     *  <p>Modified Georgiy Korneev's code</p>
+     * <p>Modified Georgiy Korneev's code</p>
      */
     private static final SimpleFileVisitor<Path> DELETE_VISITOR = new SimpleFileVisitor<>() {
         @Override
@@ -73,9 +75,9 @@ public class Implementor implements JarImpler {
     /**
      * Return string representation of default realization class implement {@code token}
      * <p> Generated class, realizing all methods by {@link Class#getMethods()} of {@code token}
+     *
      * @param token interface type token.
      * @return value in {@link String}
-     *
      */
     private String getClassCode(Class<?> token) {
 
@@ -96,6 +98,7 @@ public class Implementor implements JarImpler {
     /**
      * Return string representation package
      * <p> Return empty string if package name was equals {@code ""}
+     *
      * @param packageName name of package.
      * @return value in {@link String}
      */
@@ -105,12 +108,13 @@ public class Implementor implements JarImpler {
         }
         return "";
     }
+
     /**
      * Return string representation of default realization {@code method}
      * <p> Generated method always {@code public} and returns result of {@link #getReturnDefaultValue(Class)}
+     *
      * @param method realisable method
      * @return code of method in {@link String}
-     *
      */
     private String createMethodString(Method method) {
         Class<?> returnType = method.getReturnType();
@@ -129,10 +133,9 @@ public class Implementor implements JarImpler {
      * {@code boolean} produce {@code "false"}
      * <p>
      * other primitive types produce zero
-     * <p>
+     *
      * @param token interface type token.
      * @return value in {@link String}
-     *
      */
     private String getReturnDefaultValue(Class<?> token) {
         if (token == void.class) {
@@ -147,6 +150,7 @@ public class Implementor implements JarImpler {
             return "null";
         }
     }
+
     /**
      * Generate parameter's string to java method
      *
@@ -200,7 +204,6 @@ public class Implementor implements JarImpler {
      * When got two arguments run {@link JarImpler#implement(Class, Path)}
      * When got three arguments and first equals {@code -jar} run {@link JarImpler#implementJar(Class, Path)}
      *
-     *
      * @param args array with given arguments.
      * @throws ImplerException when incorrect args or it throws {@link #implementJar(Class, Path)} or {@link #implement(Class, Path)}
      */
@@ -240,25 +243,23 @@ public class Implementor implements JarImpler {
             System.err.print("Problems with implement");
         }
     }
+
     /**
      * Create .jar file, which contains compiled implemented class
-     *
+     * <p>
      * Method takes type token and path to results .jar file. File will be compiled by system java compiler.
      * If something went wrong, {@code ImplerException} will throw.
      *
-     * @param token interface type token.
-     *
+     * @param token   interface type token.
      * @param jarFile path to resulting .jar file
-     *
-     * @throws ImplerException
-     *         if something IOException occurred(in creating/removing temporary directory or in creating/writing .jar file
-     *         if compilation was failed
+     * @throws ImplerException if something IOException occurred(in creating/removing temporary directory or in creating/writing .jar file
+     *                         if compilation was failed
      */
     @Override
     public void implementJar(Class<?> token, Path jarFile) throws ImplerException {
         Path temporaryDirectory;
         try {
-            temporaryDirectory = Files.createTempDirectory(jarFile.toAbsolutePath().getParent(), "temp");
+            temporaryDirectory = Files.createTempDirectory(jarFile.toAbsolutePath().getParent(), "temporaryDirectory");
         } catch (IOException e) {
             throw new ImplerException("Unable to create temporary directory");
         }
@@ -284,16 +285,15 @@ public class Implementor implements JarImpler {
             } catch (IOException e) {
                 System.err.print("Can't delete temporary directories");
             }
-
         }
     }
+
     /**
      * Get name of class implemented by token with suffix
-     *
+     * <p>
      * Modified Georgiy Korneev's code
      *
      * @param token interface type token.
-     *
      * @return {@code String} which is result name
      */
     private static String getImplName(final Class<?> token) {
@@ -302,11 +302,11 @@ public class Implementor implements JarImpler {
 
     /**
      * Get absolute path to implemented file in {@code root} directory
-     *
+     * <p>
      * Modified Georgiy Korneev's code
      *
      * @param clazz interface type token.
-     * @param root path to temporary directory
+     * @param root  path to temporary directory
      * @return the resulting {@code Path}
      */
     public static Path getFile(final Path root, final Class<?> clazz) {
@@ -315,15 +315,14 @@ public class Implementor implements JarImpler {
 
     /**
      * Compile class for with default params.
-     *
+     * <p>
      * Modified Georgiy Korneev's code
      *
      * @param token interface type token.
-     * @param root path to temporary directory
-     * @param file name of compiled file
+     * @param root  path to temporary directory
+     * @param file  name of compiled file
      * @throws ImplerException when compilation failed
-     *
-    */
+     */
 
     public static void compileFiles(Class<?> token, final Path root, final String file) throws ImplerException {
         final JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
@@ -334,7 +333,7 @@ public class Implementor implements JarImpler {
             throw new AssertionError(e);
         }
         final String classpath = root + File.pathSeparator + classPath;
-        final String[] args = new String[]{file, "-cp", classpath};
+        final String[] args = new String[]{"-encoding", "UTF-8", file, "-cp", classpath};
         final int exitCode = compiler.run(null, null, null, args);
         if (exitCode != 0) {
             throw new ImplerException("Compilation failed. Exit code " + exitCode);
