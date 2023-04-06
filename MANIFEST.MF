@@ -1,0 +1,13 @@
+Manifest-Version: 1.0
+Implementation-Vendor: Minko Elvira
+Main-Class: info.kgeorgiy.ja.minko.implementor.Implementor
+Class-Path: ..\java-advanced-2023\artifacts\info.kgeorgiy.java.advanced.implementor.jar
+
+
+
+
+
+
+
+
+
