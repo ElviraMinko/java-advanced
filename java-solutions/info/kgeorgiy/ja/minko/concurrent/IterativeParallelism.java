@@ -1,6 +1,7 @@
 package info.kgeorgiy.ja.minko.concurrent;
 
 import info.kgeorgiy.java.advanced.concurrent.ScalarIP;
+import info.kgeorgiy.java.advanced.implementor.ImplerException;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -8,6 +9,11 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
+/**
+ * Implements an {@link ScalarIP} interface with parallel computing
+ *
+ * @author Elvira Minko
+ */
 
 public class IterativeParallelism implements ScalarIP {
 
@@ -51,9 +57,15 @@ public class IterativeParallelism implements ScalarIP {
         }
 
         for (Thread thread : threadList) {
-            thread.join();
+            try {
+                thread.join();
+            } catch (InterruptedException e) {
+                for (Thread value : threadList) {
+                    value.interrupt();
+                }
+                throw new InterruptedException(e.getMessage());
+            }
         }
-
         return result;
     }
 
