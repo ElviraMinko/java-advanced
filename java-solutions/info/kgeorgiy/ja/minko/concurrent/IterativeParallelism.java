@@ -3,6 +3,7 @@ package info.kgeorgiy.ja.minko.concurrent;
 import info.kgeorgiy.java.advanced.concurrent.ScalarIP;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.function.Function;
@@ -42,10 +43,8 @@ public class IterativeParallelism implements ScalarIP {
     private <T, U> List<U> function(int threads, List<? extends T> values, Function<List<? extends T>, U> function) throws InterruptedException {
         var splitValues = splitValues(threads, values);
 
-        List<U> result = new ArrayList<>(threads);
-        for (int i = 0; i < splitValues.size(); i++) {
-            result.add(null);
-        }
+        List<U> result = new ArrayList<>(Collections.nCopies(threads, null));
+
         List<Thread> threadList = new ArrayList<>(threads);
         for (int i = 0; i < splitValues.size(); i++) {
             int finalI = i;
