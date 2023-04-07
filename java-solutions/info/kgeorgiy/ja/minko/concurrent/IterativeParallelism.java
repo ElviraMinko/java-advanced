@@ -1,7 +1,6 @@
 package info.kgeorgiy.ja.minko.concurrent;
 
 import info.kgeorgiy.java.advanced.concurrent.ScalarIP;
-import info.kgeorgiy.java.advanced.implementor.ImplerException;
 
 import java.util.ArrayList;
 import java.util.Comparator;
