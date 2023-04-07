@@ -8,11 +8,6 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
-/**
- * Implements an {@link ScalarIP} interface with parallel computing
- *
- * @author Elvira Minko
- */
 
 public class IterativeParallelism implements ScalarIP {
 
