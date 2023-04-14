@@ -43,14 +43,23 @@ public class ParallelMapperImpl implements ParallelMapper {
     @Override
     public <T, R> List<R> map(Function<? super T, ? extends R> f, List<? extends T> args) throws InterruptedException {
         MapperList<R> result = new MapperList<>(args.size());
-
         for (int i = 0; i < args.size(); i++) {
             synchronized (tasksQueue) {
                 final T element = args.get(i);
                 int finalI = i;
-                tasksQueue.add(() -> result.set(finalI, f.apply(element)));
+
+                tasksQueue.add(() -> {
+                    try {
+                        result.set(finalI, f.apply(element));
+                    } catch (RuntimeException e) {
+                        result.getException().addSuppressed(e);
+                    }
+                });
                 tasksQueue.notifyAll();
             }
+        }
+        if (result.checkIsAnyException()) {
+            throw result.getException();
         }
         return result.getList();
     }
@@ -60,18 +69,24 @@ public class ParallelMapperImpl implements ParallelMapper {
         for (Thread thread : threadList) {
             thread.interrupt();
         }
-        for (Thread thread : threadList) {
+        boolean flag = false;
+        for (int i = 0; i < threadList.size(); ) {
             try {
-                thread.join();
+                threadList.get(i).join();
+                i++;
             } catch (InterruptedException e) {
-                System.err.println("Thread has interrupted the current thread" + e.getMessage());
+                flag = true;
             }
+        }
+        if (flag) {
+            Thread.currentThread().interrupt();
         }
     }
 
     private static class MapperList<T> {
         List<T> list;
         int unmappedElements;
+        RuntimeException exception = null;
 
         public MapperList(int size) {
             list = new ArrayList<>(Collections.nCopies(size, null));
@@ -90,6 +105,15 @@ public class ParallelMapperImpl implements ParallelMapper {
             }
             return list;
         }
+
+        public RuntimeException getException() {
+            return exception;
+        }
+
+        public boolean checkIsAnyException() {
+            return exception != null;
+        }
+
     }
 
 }

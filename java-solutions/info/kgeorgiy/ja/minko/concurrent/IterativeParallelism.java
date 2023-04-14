@@ -81,7 +81,6 @@ public class IterativeParallelism implements ScalarIP {
                     }
                     isInterrupt = false;
                     exception.addSuppressed(e);
-
                 }
             }
             if (!isInterrupt) {
