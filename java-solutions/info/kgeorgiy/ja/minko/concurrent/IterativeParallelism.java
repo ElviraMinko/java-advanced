@@ -85,7 +85,7 @@ public class IterativeParallelism implements ScalarIP {
                 }
             }
             if (!isInterrupt) {
-                throw new InterruptedException("Interrupted exceptions: " + exception.getMessage());
+                throw exception;
             }
         } else {
             result = parallelMapper.map(function, splitValues);
