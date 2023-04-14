@@ -52,22 +52,6 @@ public class IterativeParallelism implements ScalarIP {
         return returnValue;
     }
 
-    private void finishThreadsWork(List<Thread> threadList, boolean isInterrupt, InterruptedException exception) {
-        for (int i = 0; i < threadList.size(); i++) {
-            try {
-                threadList.get(i).join();
-            } catch (InterruptedException e) {
-                if (isInterrupt) {
-                    for (int j = i; j < threadList.size(); j++) {
-                        threadList.get(j).interrupt();
-                    }
-                }
-                isInterrupt = false;
-                exception.addSuppressed(e);
-                finishThreadsWork(threadList.subList(i, threadList.size()), false, exception);
-            }
-        }
-    }
 
     private <T, U> List<U> function(int threads, List<? extends T> values, Function<List<? extends T>, U> function) throws InterruptedException {
         var splitValues = splitValues(threads, values);
@@ -85,7 +69,21 @@ public class IterativeParallelism implements ScalarIP {
 
             boolean isInterrupt = true;
             InterruptedException exception = new InterruptedException();
-            finishThreadsWork(threadList, isInterrupt, exception);
+            for (int i = 0; i < threadList.size(); ) {
+                try {
+                    threadList.get(i).join();
+                    i++;
+                } catch (InterruptedException e) {
+                    if (isInterrupt) {
+                        for (int j = i; j < threadList.size(); j++) {
+                            threadList.get(j).interrupt();
+                        }
+                    }
+                    isInterrupt = false;
+                    exception.addSuppressed(e);
+
+                }
+            }
             if (!isInterrupt) {
                 throw new InterruptedException("Interrupted exceptions: " + exception.getMessage());
             }
