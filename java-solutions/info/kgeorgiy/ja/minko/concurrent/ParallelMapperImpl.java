@@ -40,6 +40,35 @@ public class ParallelMapperImpl implements ParallelMapper {
         }
     }
 
+    @Override
+    public <T, R> List<R> map(Function<? super T, ? extends R> f, List<? extends T> args) throws InterruptedException {
+        MapperList<R> result = new MapperList<>(args.size());
+
+        for (int i = 0; i < args.size(); i++) {
+            synchronized (tasksQueue) {
+                final T element = args.get(i);
+                int finalI = i;
+                tasksQueue.add(() -> result.set(finalI, f.apply(element)));
+                tasksQueue.notifyAll();
+            }
+        }
+        return result.getList();
+    }
+
+    @Override
+    public void close() {
+        for (Thread thread : threadList) {
+            thread.interrupt();
+        }
+        for (Thread thread : threadList) {
+            try {
+                thread.join();
+            } catch (InterruptedException e) {
+                System.err.println("Thread has interrupted the current thread" + e.getMessage());
+            }
+        }
+    }
+
     private static class MapperList<T> {
         List<T> list;
         int unmappedElements;
@@ -63,32 +92,4 @@ public class ParallelMapperImpl implements ParallelMapper {
         }
     }
 
-
-    @Override
-    public <T, R> List<R> map(Function<? super T, ? extends R> f, List<? extends T> args) throws InterruptedException {
-        MapperList<R> result = new MapperList<>(args.size());
-
-        for (int i = 0; i < args.size(); i++) {
-            synchronized (tasksQueue) {
-                final T element = args.get(i);
-                int finalI = i;
-                tasksQueue.add(() -> result.set(finalI, f.apply(element)));
-                tasksQueue.notifyAll();
-            }
-        }
-
-        return result.getList();
-    }
-
-    @Override
-    public void close() {
-        for (Thread thread : threadList) {
-            thread.interrupt();
-            try {
-                thread.join();
-            } catch (InterruptedException e) {
-                //
-            }
-        }
-    }
 }
