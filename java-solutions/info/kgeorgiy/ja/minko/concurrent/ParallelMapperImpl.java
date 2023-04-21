@@ -52,7 +52,7 @@ public class ParallelMapperImpl implements ParallelMapper {
                     try {
                         result.set(finalI, f.apply(element));
                     } catch (RuntimeException e) {
-                        result.getException().addSuppressed(e);
+                        result.addException(e);
                     }
                 });
                 tasksQueue.notifyAll();
@@ -99,18 +99,30 @@ public class ParallelMapperImpl implements ParallelMapper {
             this.notify();
         }
 
-        public synchronized List<T> getList() throws InterruptedException {
-            while (unmappedElements > 0) {
-                this.wait();
-            }
+        public List<T> getList() {
             return list;
+        }
+
+        public synchronized void addException(RuntimeException e) {
+            if (e != null) {
+                if (exception == null) {
+                    exception = e;
+                } else {
+                    exception.addSuppressed(e);
+                }
+            }
+            this.notify();
         }
 
         public RuntimeException getException() {
             return exception;
         }
 
-        public boolean checkIsAnyException() {
+
+        public synchronized boolean checkIsAnyException() throws InterruptedException {
+            while (unmappedElements > 0) {
+                this.wait();
+            }
             return exception != null;
         }
 
