@@ -114,7 +114,7 @@ public class ParallelMapperImpl implements ParallelMapper {
             this.notify();
         }
 
-        public RuntimeException getException() {
+        public synchronized RuntimeException getException() {
             return exception;
         }
 
