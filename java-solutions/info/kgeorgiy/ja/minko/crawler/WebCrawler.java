@@ -119,24 +119,27 @@ public class WebCrawler implements Crawler {
      * @throws NumberFormatException when incorrect args
      */
     public static void main(String[] args) throws IOException {
-        if (args == null || args.length < 1 || args.length > 4) {
-            System.err.println("Need to get arguments on this pattern: WebCrawler url [downloaders [extractors [perHost]]]");
+        if (args == null || args.length < 1 || args.length > 5) {
+            System.err.println("Need to get arguments on this pattern: WebCrawler url [depth [downloaders [extractors [perHost]]]]");
             return;
         }
         int downloaders;
         int extractors;
         int perHost;
+        int depth;
         try {
-            downloaders = args.length > 1 ? Integer.parseInt(args[1]) : 4;
-            extractors = args.length > 2 ? Integer.parseInt(args[2]) : 4;
-            perHost = args.length > 3 ? Integer.parseInt(args[3]) : 4;
+            depth = args.length > 1 ? Integer.parseInt(args[1]) : 1;
+            downloaders = args.length > 2 ? Integer.parseInt(args[2]) : 4;
+            extractors = args.length > 3 ? Integer.parseInt(args[3]) : 4;
+            perHost = args.length > 4 ? Integer.parseInt(args[4]) : 4;
         } catch (NumberFormatException e) {
-            throw new NumberFormatException(e.getMessage());
+            System.err.println("String does not contain a parsable integer");
+            return;
         }
-        int depth = 1;
+
         String url = args[0];
         if (url == null) {
-            System.err.println("url can't be null");
+            System.err.println("Url can't be null");
             return;
         }
 
