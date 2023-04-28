@@ -34,22 +34,23 @@ public class WebCrawler implements Crawler {
 
     @Override
     public Result download(String url, int depth) {
+        // :NOTE: extract to class
         Set<String> result = ConcurrentHashMap.newKeySet();
         Set<String> visitedLinks = ConcurrentHashMap.newKeySet();
         Set<String> newLayer = ConcurrentHashMap.newKeySet();
-        ConcurrentLinkedQueue<String> queue = new ConcurrentLinkedQueue<>();
+        ConcurrentLinkedQueue<String> currentLayer = new ConcurrentLinkedQueue<>();
         ConcurrentHashMap<String, IOException> exceptions = new ConcurrentHashMap<>();
         Phaser phaser = new Phaser(1);
 
         visitedLinks.add(url);
-        queue.add(url);
+        currentLayer.add(url);
         for (int i = depth; i >= 1; i--) {
-            for (String link : queue) {
+            for (String link : currentLayer) {
                 downloadLinks(link, result, exceptions, visitedLinks, phaser, newLayer, i);
             }
             phaser.arriveAndAwaitAdvance();
-            queue.clear();
-            queue.addAll(newLayer);
+            currentLayer.clear();
+            currentLayer.addAll(newLayer);
             newLayer.clear();
 
         }
@@ -61,37 +62,7 @@ public class WebCrawler implements Crawler {
             String host = URLUtils.getHost(url);
             ConcurrentLinkedQueue<Runnable> hostWorker = hosts.computeIfAbsent(host, string -> new ConcurrentLinkedQueue<>());
             phaser.register();
-            Runnable runnable = () -> {
-                try {
-                    Document document = downloader.download(url);
-                    result.add(url);
-                    if (depth != 1) {
-                        phaser.register();
-                        extractorTreads.submit(() -> {
-                            try {
-                                for (String link : document.extractLinks()) {
-                                    if (!visitedLinks.contains(link)) {
-                                        visitedLinks.add(link);
-                                        newLayer.add(link);
-                                    }
-                                }
-                            } catch (IOException e) {
-                                System.err.println("Exception in extracting links:" + e.getMessage());
-                            } finally {
-                                phaser.arriveAndDeregister();
-                            }
-                        });
-                    }
-                } catch (IOException e) {
-                    exceptions.put(url, e);
-                } finally {
-                    phaser.arriveAndDeregister();
-                    Runnable task = hostWorker.poll();
-                    if (task != null) {
-                        downloadTreads.submit(task);
-                    }
-                }
-            };
+            Runnable runnable = downloadRunnable(url, result, exceptions, visitedLinks, phaser, newLayer, depth, hostWorker);
 
             try {
                 downloadTreads.submit(runnable);
@@ -101,6 +72,44 @@ public class WebCrawler implements Crawler {
         } catch (MalformedURLException e) {
             exceptions.put(url, e);
         }
+    }
+
+    private Runnable downloadRunnable(String url, Set<String> result, ConcurrentHashMap<String, IOException> exceptions, Set<String> visitedLinks, Phaser phaser, Set<String> newLayer, int depth, ConcurrentLinkedQueue<Runnable> hostWorker) {
+        return () -> {
+            try {
+                Document document = downloader.download(url);
+                result.add(url);
+                if (depth != 1) {
+                    extractTask(visitedLinks, phaser, newLayer, document);
+                }
+            } catch (IOException e) {
+                exceptions.put(url, e);
+            } finally {
+                phaser.arriveAndDeregister();
+                Runnable task = hostWorker.poll();
+                if (task != null) {
+                    downloadTreads.submit(task);
+                }
+            }
+        };
+    }
+
+    private void extractTask(Set<String> visitedLinks, Phaser phaser, Set<String> newLayer, Document document) {
+        phaser.register();
+        extractorTreads.submit(() -> {
+            try {
+                for (String link : document.extractLinks()) {
+                    if (!visitedLinks.contains(link)) {
+                        visitedLinks.add(link);
+                        newLayer.add(link);
+                    }
+                }
+            } catch (IOException e) {
+                System.err.println("Exception in extracting links:" + e.getMessage());
+            } finally {
+                phaser.arriveAndDeregister();
+            }
+        });
     }
 
 
@@ -128,10 +137,10 @@ public class WebCrawler implements Crawler {
         int perHost;
         int depth;
         try {
-            depth = args.length > 1 ? Integer.parseInt(args[1]) : 1;
-            downloaders = args.length > 2 ? Integer.parseInt(args[2]) : 4;
-            extractors = args.length > 3 ? Integer.parseInt(args[3]) : 4;
-            perHost = args.length > 4 ? Integer.parseInt(args[4]) : 4;
+            depth = parseOrDefault(args, 1);
+            downloaders = parseOrDefault(args, 2);
+            extractors = parseOrDefault(args, 3);
+            perHost = parseOrDefault(args, 4);
         } catch (NumberFormatException e) {
             System.err.println("String does not contain a parsable integer");
             return;
@@ -144,8 +153,13 @@ public class WebCrawler implements Crawler {
         }
 
         Downloader downloader = new CachingDownloader(10.0);
-        WebCrawler webCrawler = new WebCrawler(downloader, downloaders, extractors, perHost);
-        webCrawler.download(url, depth);
+        try (WebCrawler webCrawler = new WebCrawler(downloader, downloaders, extractors, perHost)) {
+            webCrawler.download(url, depth);
+        }
 
+    }
+
+    private static int parseOrDefault(String[] args, int x) {
+        return args.length > x ? Integer.parseInt(args[x]) : x;
     }
 }
