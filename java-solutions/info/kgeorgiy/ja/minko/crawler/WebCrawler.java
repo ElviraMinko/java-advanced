@@ -98,4 +98,23 @@ public class WebCrawler implements Crawler {
         extractorTreads.shutdown();
         downloadTreads.shutdown();
     }
+
+    public static void main(String[] args) throws IOException {
+        if (args == null || args.length < 1 || args.length > 4) {
+            System.err.println("Need to get arguments on this pattern: WebCrawler url [downloaders [extractors [perHost]]]");
+            return;
+        }
+
+        int downloaders = args.length > 1 ? Integer.parseInt(args[1]) : 4;
+        int extractors = args.length > 2 ? Integer.parseInt(args[2]) : 4;
+        int perHost = args.length > 3 ? Integer.parseInt(args[3]) : 4;
+        int depth = 1;
+        String url = args[0];
+
+
+        Downloader downloader = new CachingDownloader(10.0);
+        WebCrawler webCrawler = new WebCrawler(downloader, downloaders, extractors, perHost);
+        webCrawler.download(url, depth);
+
+    }
 }
