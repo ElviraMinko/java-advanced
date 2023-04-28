@@ -2,12 +2,20 @@ package info.kgeorgiy.ja.minko.crawler;
 
 import info.kgeorgiy.java.advanced.crawler.*;
 
+
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.Set;
 import java.util.concurrent.*;
 
+/**
+ * WebCrawler class
+ * <p>
+ * Realizing {@code Crawler} interface
+ *
+ * @author Minko Elvira
+ */
 public class WebCrawler implements Crawler {
 
     private final Downloader downloader;
@@ -15,6 +23,9 @@ public class WebCrawler implements Crawler {
     private final ExecutorService extractorTreads;
     private final ConcurrentHashMap<String, ConcurrentLinkedQueue<Runnable>> hosts = new ConcurrentHashMap<>();
 
+    /**
+     * Constructor from {@link WebCrawler}
+     */
     public WebCrawler(Downloader downloader, int downloaders, int extractors, int perHost) {
         this.downloader = downloader;
         this.downloadTreads = Executors.newFixedThreadPool(downloaders);
@@ -99,18 +110,35 @@ public class WebCrawler implements Crawler {
         downloadTreads.shutdown();
     }
 
+    /**
+     * Static entry-point
+     *
+     * <p> All arguments have to be defined (not null).
+     *
+     * @param args array with given arguments.
+     * @throws NumberFormatException when incorrect args
+     */
     public static void main(String[] args) throws IOException {
         if (args == null || args.length < 1 || args.length > 4) {
             System.err.println("Need to get arguments on this pattern: WebCrawler url [downloaders [extractors [perHost]]]");
             return;
         }
-
-        int downloaders = args.length > 1 ? Integer.parseInt(args[1]) : 4;
-        int extractors = args.length > 2 ? Integer.parseInt(args[2]) : 4;
-        int perHost = args.length > 3 ? Integer.parseInt(args[3]) : 4;
+        int downloaders;
+        int extractors;
+        int perHost;
+        try {
+            downloaders = args.length > 1 ? Integer.parseInt(args[1]) : 4;
+            extractors = args.length > 2 ? Integer.parseInt(args[2]) : 4;
+            perHost = args.length > 3 ? Integer.parseInt(args[3]) : 4;
+        } catch (NumberFormatException e) {
+            throw new NumberFormatException(e.getMessage());
+        }
         int depth = 1;
         String url = args[0];
-
+        if (url == null) {
+            System.err.println("Need to get arguments on this pattern: WebCrawler url [downloaders [extractors [perHost]]]");
+            return;
+        }
 
         Downloader downloader = new CachingDownloader(10.0);
         WebCrawler webCrawler = new WebCrawler(downloader, downloaders, extractors, perHost);
