@@ -136,7 +136,7 @@ public class WebCrawler implements Crawler {
         int depth = 1;
         String url = args[0];
         if (url == null) {
-            System.err.println("Need to get arguments on this pattern: WebCrawler url [downloaders [extractors [perHost]]]");
+            System.err.println("url can't be null");
             return;
         }
 
