@@ -57,14 +57,14 @@ public class HelloUDPClient implements HelloClient {
                     for (int j = 1; j <= requests; j++) {
                         String message = createMessage(prefix, finalI, j);
                         System.out.println("Sending:" + message);
-                        while (true) {
+                        while (!Thread.interrupted()) {
                             try {
                                 setString(datagramPacket, message);
                                 datagramSocket.send(datagramPacket);
                                 DatagramPacket receivedDatagramPacket = createPacket(datagramSocket, inetSocketAddress);
                                 datagramSocket.receive(receivedDatagramPacket);
                                 String responseMessage = getString(receivedDatagramPacket);
-                                if (responseMessage.equals("Hello, " + message)) {
+                                if (responseMessage.contains(message)) {
                                     System.out.println("Requested: " + message);
                                     break;
                                 }
@@ -81,8 +81,12 @@ public class HelloUDPClient implements HelloClient {
 
         try {
             threadPool.shutdown();
-            if (!threadPool.awaitTermination(threads * requests * 3L, TimeUnit.SECONDS)) {
-                System.out.println("Too long waiting");
+            if (isTimeOut(threadPool)) {
+                System.err.println("Too long waiting");
+                threadPool.shutdownNow();
+                if (isTimeOut(threadPool)) {
+                    System.err.println("Resource leak");
+                }
             }
         } catch (InterruptedException e) {
             System.err.println("Can't shutdown threads");
@@ -93,5 +97,7 @@ public class HelloUDPClient implements HelloClient {
     private String createMessage(String prefix, int numberThread, int numberRequest) {
         return String.join("", prefix, Integer.toString(numberThread), "_", Integer.toString(numberRequest));
     }
-
+    private boolean isTimeOut(ExecutorService threadPool) throws InterruptedException {
+        return !threadPool.awaitTermination(100L, TimeUnit.SECONDS);
+    }
 }
