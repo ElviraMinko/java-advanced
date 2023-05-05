@@ -48,13 +48,13 @@ public class HelloUDPClient implements HelloClient {
 
         ExecutorService threadPool = Executors.newFixedThreadPool(threads);
         InetSocketAddress inetSocketAddress = new InetSocketAddress(host, port);
-        for (int i = 1; i < threads + 1; i++) {
+        for (int i = 1; i <= threads; i++) {
             int finalI = i;
             threadPool.submit(() -> {
                 try (DatagramSocket datagramSocket = new DatagramSocket()) {
                     datagramSocket.setSoTimeout(239);
                     DatagramPacket datagramPacket = createPacket(datagramSocket, inetSocketAddress);
-                    for (int j = 1; j < requests + 1; j++) {
+                    for (int j = 1; j <= requests; j++) {
                         String message = createMessage(prefix, finalI, j);
                         System.out.println("Sending:" + message);
                         while (true) {
