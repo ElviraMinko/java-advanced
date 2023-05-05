@@ -18,6 +18,9 @@ import static info.kgeorgiy.ja.minko.hello.Utils.*;
  * @author Minko Elvira
  */
 public class HelloUDPClient implements HelloClient {
+
+    public static final int SO_TIMEOUT = 239;
+
     /**
      * Static entry-point
      *
@@ -39,59 +42,60 @@ public class HelloUDPClient implements HelloClient {
             HelloClient helloUDPClient = new HelloUDPClient();
             helloUDPClient.run(host, port, prefix, threads, requests);
         } catch (NumberFormatException e) {
-            System.err.println("Can't parse number");
+            System.err.println("Can't parse number: " + e.getMessage());
         }
     }
 
     @Override
     public void run(String host, int port, String prefix, int threads, int requests) {
 
-        ExecutorService threadPool = Executors.newFixedThreadPool(threads);
-        InetSocketAddress inetSocketAddress = new InetSocketAddress(host, port);
-        for (int i = 1; i <= threads; i++) {
-            int finalI = i;
-            threadPool.submit(() -> {
-                try (DatagramSocket datagramSocket = new DatagramSocket()) {
-                    datagramSocket.setSoTimeout(239);
-                    DatagramPacket datagramPacket = createPacket(datagramSocket, inetSocketAddress);
-                    for (int j = 1; j <= requests; j++) {
-                        String message = createMessage(prefix, finalI, j);
-                        System.out.println("Sending:" + message);
-                        while (!Thread.interrupted()) {
-                            try {
-                                setString(datagramPacket, message);
-                                datagramSocket.send(datagramPacket);
-                                DatagramPacket receivedDatagramPacket = createPacket(datagramSocket, inetSocketAddress);
-                                datagramSocket.receive(receivedDatagramPacket);
-                                String responseMessage = getString(receivedDatagramPacket);
-                                if (responseMessage.contains(message)) {
-                                    System.out.println("Requested: " + message);
-                                    break;
-                                }
-                            } catch (IOException e) {
-                                System.out.println("IOException in sending " + message);
-                            }
-                        }
-                    }
-                } catch (SocketException e) {
-                    System.err.println("Can't create socket");
-                }
-            });
-        }
+        try (ExecutorService threadPool = Executors.newFixedThreadPool(threads)) {
+            InetSocketAddress inetSocketAddress = new InetSocketAddress(host, port);
+            for (int i = 1; i <= threads; i++) {
+                final int finalI = i;
+                threadPool.submit(() -> process(prefix, requests, inetSocketAddress, finalI));
+            }
 
-        try {
-            threadPool.shutdown();
-            if (isTimeOut(threadPool)) {
-                System.err.println("Too long waiting");
-                threadPool.shutdownNow();
+            try {
+                threadPool.shutdown();
                 if (isTimeOut(threadPool)) {
-                    System.err.println("Resource leak");
+                    System.err.println("Too long waiting");
+                    threadPool.shutdownNow();
+                    if (isTimeOut(threadPool)) {
+                        System.err.println("Resource leak");
+                    }
+                }
+            } catch (InterruptedException e) {
+                System.err.println("Can't shutdown threads");
+            }
+        }
+    }
+
+    private void process(String prefix, int requests, InetSocketAddress inetSocketAddress, int theadNumber) {
+        try (DatagramSocket datagramSocket = new DatagramSocket()) {
+            datagramSocket.setSoTimeout(SO_TIMEOUT);
+            DatagramPacket datagramPacket = new DatagramPacket(new byte[0], 0, inetSocketAddress);
+            for (int j = 1; j <= requests; j++) {
+                String message = createMessage(prefix, theadNumber, j);
+                while (!Thread.interrupted()) {
+                    try {
+                        setString(datagramPacket, message);
+                        datagramSocket.send(datagramPacket);
+                        DatagramPacket receivedDatagramPacket = createPacket(datagramSocket, inetSocketAddress);
+                        datagramSocket.receive(receivedDatagramPacket);
+                        String responseMessage = getString(receivedDatagramPacket);
+                        if (responseMessage.contains(message)) {
+                            System.out.println("Requested: " + message);
+                            break;
+                        }
+                    } catch (IOException e) {
+                        System.out.println("IOException in sending " + message);
+                    }
                 }
             }
-        } catch (InterruptedException e) {
-            System.err.println("Can't shutdown threads");
+        } catch (SocketException e) {
+            System.err.println("Can't create socket");
         }
-
     }
 
     private String createMessage(String prefix, int numberThread, int numberRequest) {

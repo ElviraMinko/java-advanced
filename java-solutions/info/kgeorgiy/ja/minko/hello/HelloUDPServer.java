@@ -20,6 +20,7 @@ import static info.kgeorgiy.ja.minko.hello.Utils.*;
  * @author Minko Elvira
  */
 public class HelloUDPServer implements HelloServer {
+    public static final long TIMEOUT = 239L;
     private ExecutorService threadPool;
     private ExecutorService main;
     private DatagramSocket datagramSocket;
@@ -41,9 +42,10 @@ public class HelloUDPServer implements HelloServer {
             int threads = Integer.parseInt(args[1]);
             try (HelloUDPServer helloUDPServer = new HelloUDPServer()) {
                 helloUDPServer.start(port, threads);
+                // :NOTE: мгновенное отключение сервера (для ожидания можно прочитать что-нибудь с консоли)
             }
         } catch (NumberFormatException e) {
-            System.err.println("Can't parse number");
+            System.err.println("Can't parse number: " + e.getMessage());
         }
     }
 
@@ -90,8 +92,8 @@ public class HelloUDPServer implements HelloServer {
         try {
             main.shutdown();
             threadPool.shutdown();
-            if (!(threadPool.awaitTermination(239L, TimeUnit.SECONDS)
-                    && main.awaitTermination(239L, TimeUnit.SECONDS))) {
+            if (!(threadPool.awaitTermination(TIMEOUT, TimeUnit.SECONDS)
+                    && main.awaitTermination(TIMEOUT, TimeUnit.SECONDS))) {
                 System.err.println("Too long closing");
             }
         } catch (InterruptedException e) {

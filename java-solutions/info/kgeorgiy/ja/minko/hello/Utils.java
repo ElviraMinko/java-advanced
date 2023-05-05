@@ -31,6 +31,5 @@ public class Utils {
     public static void setString(DatagramPacket packet, String string) {
         byte[] bytes = string.getBytes(CHARSET);
         packet.setData(bytes);
-        packet.setLength(packet.getData().length);
     }
 }
