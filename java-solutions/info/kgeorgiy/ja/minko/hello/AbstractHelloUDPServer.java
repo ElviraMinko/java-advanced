@@ -34,7 +34,6 @@ public abstract class AbstractHelloUDPServer implements HelloServer {
             int threads = Integer.parseInt(args[1]);
             try (HelloUDPServer helloUDPServer = new HelloUDPServer()) {
                 helloUDPServer.start(port, threads);
-                // :NOTE: мгновенное отключение сервера (для ожидания можно прочитать что-нибудь с консоли)
             }
         } catch (NumberFormatException e) {
             System.err.println("Can't parse number: " + e.getMessage());
