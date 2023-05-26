@@ -69,7 +69,7 @@ public class ArraySet<T> extends AbstractSet<T> implements SortedSet<T> {
 
     @Override
     public SortedSet<T> subSet(T fromElement, T toElement) {
-        if (comparator != null && comparator.compare(fromElement, toElement) >= 0) {
+        if (comparator != null && comparator.compare(fromElement, toElement) > 0) {
             throw new IllegalArgumentException("Incorrect order of interval boundaries");
         }
         return getSet(fromElement, toElement, 0);
