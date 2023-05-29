@@ -176,7 +176,7 @@ public class Implementor implements JarImpler {
     @Override
     public void implement(Class<?> token, Path root) throws ImplerException {
 
-        if (token == void.class || token.isPrimitive() || token.isArray() || Modifier.isPrivate(token.getModifiers())) {
+        if (token == void.class || token.isPrimitive() || token.isArray() || Modifier.isPrivate(token.getModifiers()) || token.equals(String.class)) {
             throw new ImplerException("Can't implements from incorrect type");
         }
         Path path = root.resolve(token.getPackageName().replace('.', File.separatorChar))
