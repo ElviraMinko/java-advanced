@@ -29,8 +29,7 @@ public class HelloUDPNonblockingClient extends AbstractHelloUDPClient {
                 }
                 for (final Iterator<SelectionKey> i = selector.selectedKeys().iterator(); i.hasNext(); ) {
                     SelectionKey key = i.next();
-                    try {
-                        DatagramChannel channel = (DatagramChannel) key.channel();
+                    try (DatagramChannel channel = (DatagramChannel) key.channel()){
                         int threadId = (Integer) key.attachment() - 1;
                         String message = createMessage(prefix, threadId + 1, list.get(threadId));
                         if (key.isReadable()) {

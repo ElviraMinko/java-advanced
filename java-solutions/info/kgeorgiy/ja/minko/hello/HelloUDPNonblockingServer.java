@@ -20,17 +20,43 @@ public class HelloUDPNonblockingServer extends AbstractHelloUDPServer {
     private DatagramChannel datagramChannel;
 
     private final Deque<AbstractMap.SimpleEntry<ByteBuffer, SocketAddress>> queue = new ConcurrentLinkedDeque<>();
-
+    public static void TryToCloseSelector(Selector selector){
+        try {
+            selector.close();
+        } catch (IOException ex) {
+            System.err.println("I/O error in close: " + ex.getMessage());
+        }
+    }
+    public static void TryToCloseDatagramChannel(DatagramChannel datagramChannel){
+        try {
+            datagramChannel.close();
+        } catch (IOException ex) {
+            System.err.println("I/O error in close: " + ex.getMessage());
+        }
+    }
     @Override
     public void start(int port, int threads) {
         try {
             selector = Selector.open();
+        } catch (IOException e) {
+            System.err.println("I/O error occurs: " + e.getMessage());
+            return;
+        }
+        try {
             datagramChannel = DatagramChannel.open();
+        } catch (IOException e) {
+            System.err.println("I/O error occurs: " + e.getMessage());
+            TryToCloseSelector(selector);
+            return;
+        }
+        try {
             datagramChannel.configureBlocking(false);
             datagramChannel.bind(new InetSocketAddress(port));
             datagramChannel.register(selector, SelectionKey.OP_READ);
         } catch (IOException e) {
-            System.err.println("I/O error occurs: " + e.getMessage());
+            TryToCloseSelector(selector);
+            TryToCloseDatagramChannel(datagramChannel);
+            return;
         }
         threadPool = Executors.newFixedThreadPool(threads);
         main = Executors.newSingleThreadExecutor();
